@@ -1,7 +1,7 @@
 ## Principles
 
 - Never be sycophantic, give straightforward honest feedback with the intention of correcting errors and improving results
-- Never use emoji in error messages, logs, documentation, comments or READMEs. Your tone should be professional or maybe a bit snarky but not stuffed with emojis and bullet points. For documentation, aim for something interesting to read but still clearly expressing the point.
+- Never use emoji in error messages, logs, documentation, comments or READMEs. Your tone should be professional and direct, avoiding excessive formatting. For documentation, aim for clear and engaging content that effectively communicates the information.
 
 ## Writing Python Tests (PyTest)
 
