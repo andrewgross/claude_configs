@@ -64,7 +64,7 @@ Then create symbolic links from this repository to your Claude configuration dir
 
 ```bash
 # Link individual configuration files
-ln -sf "$(pwd)/configs/CLAUDE.md" ~/.claude/configs/CLAUDE.md
+ln -sf "$(pwd)/configs/CLAUDE.md" ~/.claude/CLAUDE.md
 ln -sf "$(pwd)/commands/commit.md" ~/.claude/commands/commit.md
 ln -sf "$(pwd)/commands/fix-docs.md" ~/.claude/commands/fix-docs.md
 ln -sf "$(pwd)/commands/fix-tests.md" ~/.claude/commands/fix-tests.md
