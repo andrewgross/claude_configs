@@ -30,11 +30,13 @@ Pre-defined workflows for common development tasks:
 - **`/commit`** - Intelligently stage changes and generate commit messages
 - **`/fix-docs`** - Review and update repository documentation
 - **`/fix-tests`** - Run tests, identify failures, and fix them
+- **`/update-changelog`** - Automatically update CHANGELOG.md from git history
 
 ### Agents
 
 Specialized configurations for complex analysis tasks:
 
+- **`changelog-updater`** - Analyze git history and generate changelog entries
 - **`repo-interface-analyzer`** - Analyze library interfaces and generate usage documentation
 
 ### Configuration
@@ -68,6 +70,8 @@ ln -sf "$(pwd)/configs/CLAUDE.md" ~/.claude/CLAUDE.md
 ln -sf "$(pwd)/commands/commit.md" ~/.claude/commands/commit.md
 ln -sf "$(pwd)/commands/fix-docs.md" ~/.claude/commands/fix-docs.md
 ln -sf "$(pwd)/commands/fix-tests.md" ~/.claude/commands/fix-tests.md
+ln -sf "$(pwd)/commands/update-changelog.md" ~/.claude/commands/update-changelog.md
+ln -sf "$(pwd)/agents/changelog-updater.md" ~/.claude/agents/changelog-updater.md
 ln -sf "$(pwd)/agents/repo-interface-analyzer.md" ~/.claude/agents/repo-interface-analyzer.md
 ```
 
@@ -104,6 +108,7 @@ These configurations are designed to be used with Claude AI in development envir
 2. Use `/commit` to automatically stage and commit changes with appropriate messages
 3. Use `/fix-tests` to ensure all tests pass after changes
 4. Use `/fix-docs` to update documentation to reflect code changes
+5. Use `/update-changelog` to generate changelog entries from recent commits
 
 ## Testing Guidelines
 
