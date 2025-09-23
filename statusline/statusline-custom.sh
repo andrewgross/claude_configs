@@ -16,6 +16,29 @@ SESSION_ID=$(echo "$input" | jq -r '.session_id')
 PROJECT_NAME=$(basename "$PROJECT_DIR")
 CURRENT_NAME=$(basename "$CURRENT_DIR")
 
+# Check git status
+GIT_STATUS=""
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    # We're in a git repository
+    STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+    UNSTAGED=$(git diff --name-only | wc -l | tr -d ' ')
+    UNTRACKED=$(git ls-files --others --exclude-standard | wc -l | tr -d ' ')
+
+    if [[ "$STAGED" -eq 0 && "$UNSTAGED" -eq 0 && "$UNTRACKED" -eq 0 ]]; then
+        GIT_STATUS="clean"
+    else
+        GIT_PARTS=()
+        [[ "$STAGED" -gt 0 ]] && GIT_PARTS+=("${STAGED}s")
+        [[ "$UNSTAGED" -gt 0 ]] && GIT_PARTS+=("${UNSTAGED}m")
+        [[ "$UNTRACKED" -gt 0 ]] && GIT_PARTS+=("${UNTRACKED}u")
+
+        # Join array elements with +
+        GIT_STATUS=$(IFS='+'; echo "${GIT_PARTS[*]}")
+    fi
+else
+    GIT_STATUS="no-git"
+fi
+
 # Calculate tokens from transcript
 TOTAL_TOKENS=0
 if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ]; then
@@ -41,4 +64,4 @@ else
 fi
 
 # Output statusline
-printf "[%s] | %s | %d%% | [proj] %s | [cwd] %s" "$MODEL_DISPLAY" "$TOKEN_DISPLAY" "$PERCENTAGE" "$PROJECT_NAME" "$CURRENT_NAME"
+printf "[%s] | %s | %d%% | [git] %s | [proj] %s | [cwd] %s" "$MODEL_DISPLAY" "$TOKEN_DISPLAY" "$PERCENTAGE" "$GIT_STATUS" "$PROJECT_NAME" "$CURRENT_NAME"

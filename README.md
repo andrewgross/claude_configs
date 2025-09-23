@@ -46,7 +46,16 @@ Specialized configurations for complex analysis tasks:
 
 ### Statusline
 
-- **`statusline-custom.sh`** - Custom statusline script that displays model info, token usage, and workspace context
+- **`statusline-custom.sh`** - Custom statusline script that displays model info, token usage, git status, and workspace context
+
+The statusline displays:
+- Model name (e.g., "Claude 3.5 Sonnet")
+- Token usage with percentage of threshold (configurable via `CLAUDE_AUTO_COMPACT_THRESHOLD`)
+- Git repository status:
+  - `clean` - No changes
+  - `#s+#m+#u` - Staged/modified/untracked file counts
+  - `no-git` - Not in a git repository
+- Project and current directory names
 
 ## Requirements
 
@@ -60,9 +69,25 @@ Specialized configurations for complex analysis tasks:
 
 To use these configurations with Claude, you need to link them into your home directory where Claude can discover them. Claude looks for configuration files in the `~/.claude/` directory structure.
 
-### Setting Up Configuration Links
+### Quick Setup (Recommended)
 
-First, ensure the Claude configuration directory exists:
+Run the automated setup script from the root of this repository:
+
+```bash
+./setup.sh
+```
+
+The setup script will:
+- Create necessary directories in `~/.claude/`
+- Safely link all configuration files (removing existing links/files if needed)
+- Verify the installation
+- Provide colored output showing success/failure status
+
+This script is safe to run multiple times and can be used to update links after pulling new changes.
+
+### Manual Setup
+
+Alternatively, you can manually create the symbolic links. First, ensure the Claude configuration directory exists:
 
 ```bash
 mkdir -p ~/.claude/{agents,commands,configs}

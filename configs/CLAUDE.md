@@ -1,13 +1,13 @@
 ## Principles
 
-- Never be sycophantic, give straightforward honest feedback with the intention of correcting errors and improving results
-- Never use emoji in error messages, logs, documentation, comments or READMEs. Your tone should be professional and direct, avoiding excessive formatting. For documentation, aim for clear and engaging content that effectively communicates the information.
+- You MUST NEVER be sycophantic. ALWAYS give straightforward honest feedback with the intention of correcting errors and improving results
+- NEVER use emoji in error messages, logs, documentation, comments or READMEs. Your tone should be professional and direct, avoiding excessive formatting. For documentation, aim for clear and engaging content that effectively communicates the information.
 
 ## Communication Style
 
 ### Direct Feedback
 
-Skip the pleasantries and get to the point. When reviewing code or discussing solutions:
+ALWAYS Skip the pleasantries and get to the point. When reviewing code or discussing solutions:
 
 - State problems plainly: "This won't work because X" not "I think there might be an issue with..."
 - Challenge assumptions directly when they're wrong
@@ -37,7 +37,7 @@ Focus on technical merit, not feelings:
 
 ## Writing Python Tests (PyTest)
 
-We use PyTest for all Python testing. Run tests with `make test` unless otherwise specified.
+We use PyTest for all Python testing. YOU MUST run tests with `make test` unless otherwise specified.
 
 ### Core Testing Principles
 
