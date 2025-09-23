@@ -31,8 +31,22 @@ create_link() {
         return 1
     fi
 
-    # Remove existing link or file if it exists
+    # Check if target is already a symlink pointing to our source
     if [[ -L "$target" ]]; then
+        local current_target=$(readlink "$target")
+        if [[ "$current_target" == "$source" ]]; then
+            echo -e "${GREEN}✓ $description already linked correctly${NC}"
+            return 0
+        fi
+        # Check if parent directory is a symlink that might conflict
+        local parent_dir=$(dirname "$target")
+        if [[ -L "$parent_dir" ]]; then
+            local parent_target=$(readlink "$parent_dir")
+            if [[ "$parent_target" != "$(dirname "$source")" ]]; then
+                echo -e "${YELLOW}Warning: Parent directory $parent_dir is a symlink to different location, skipping $description${NC}"
+                return 1
+            fi
+        fi
         rm "$target"
         echo -e "${YELLOW}Removed existing link: $target${NC}"
     elif [[ -f "$target" ]]; then
@@ -74,7 +88,61 @@ for file in ~/.claude/CLAUDE.md ~/.claude/commands/*.md ~/.claude/agents/*.md ~/
     fi
 done
 
+# Function to update settings.json with statusline configuration
+update_settings_json() {
+    local settings_file="$HOME/.claude/settings.json"
+    local statusline_path="$HOME/.claude/statusline-custom.sh"
+
+    # Check if the statusline script is properly linked
+    if [[ ! -L "$statusline_path" || ! -f "$statusline_path" ]]; then
+        echo -e "${YELLOW}Statusline script not properly linked, skipping settings.json update${NC}"
+        return 0
+    fi
+
+    # Create settings.json if it doesn't exist
+    if [[ ! -f "$settings_file" ]]; then
+        echo '{}' > "$settings_file"
+        echo -e "${GREEN}Created $settings_file${NC}"
+    fi
+
+    # Check if jq is available
+    if ! command -v jq >/dev/null 2>&1; then
+        echo -e "${YELLOW}jq not found, skipping automatic settings.json configuration${NC}"
+        echo "Manually add this to $settings_file:"
+        echo '{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-custom.sh",
+    "padding": 0
+  }
+}'
+        return 0
+    fi
+
+    # Check if statusLine already exists in settings.json
+    if jq -e '.statusLine' "$settings_file" >/dev/null 2>&1; then
+        echo -e "${YELLOW}statusLine already configured in $settings_file, skipping${NC}"
+        return 0
+    fi
+
+    # Update settings.json with statusline configuration
+    local temp_file=$(mktemp)
+    jq '. + {"statusLine": {"type": "command", "command": "~/.claude/statusline-custom.sh", "padding": 0}}' "$settings_file" > "$temp_file" && mv "$temp_file" "$settings_file"
+
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}✓ Updated $settings_file with statusline configuration${NC}"
+    else
+        echo -e "${RED}Failed to update $settings_file${NC}"
+        rm -f "$temp_file"
+        return 1
+    fi
+}
+
 if [[ $verification_failed -eq 0 ]]; then
+    echo ""
+    echo "Configuring Claude settings..."
+    update_settings_json
+
     echo ""
     echo -e "${GREEN}🎉 Claude configuration setup completed successfully!${NC}"
     echo ""
