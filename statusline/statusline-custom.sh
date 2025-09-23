@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Configurable threshold (default: 160K tokens = 80% of 200K context)
-THRESHOLD=${CLAUDE_AUTO_COMPACT_THRESHOLD:-160000}
+# NOTE: Setting this to 100K tokens = 50% of 200K context to encourage frequent compaction
+THRESHOLD=${CLAUDE_AUTO_COMPACT_THRESHOLD:-100000}
 
 # Color definitions
 ORANGE='\033[38;5;208m'
