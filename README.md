@@ -18,6 +18,7 @@ claude_configs/
     agents/           # Specialized agent configurations
     commands/         # Command definitions for common tasks
     configs/          # Global configuration and guidelines
+    statusline/       # Custom statusline script for Claude interface
     pyproject.toml    # Python project configuration
 ```
 
@@ -43,12 +44,17 @@ Specialized configurations for complex analysis tasks:
 
 - **`CLAUDE.md`** - Core principles, testing guidelines, and language server tool documentation
 
+### Statusline
+
+- **`statusline-custom.sh`** - Custom statusline script that displays model info, token usage, and workspace context
+
 ## Requirements
 
 - Python >=3.13
 - Git for version control operations
 - PyTest for Python testing workflows
 - Language server (MCP cclsp) for intelligent code operations
+- `jq` and `bc` for statusline script functionality
 
 ## Installation
 
@@ -73,6 +79,7 @@ ln -sf "$(pwd)/commands/fix-tests.md" ~/.claude/commands/fix-tests.md
 ln -sf "$(pwd)/commands/update-changelog.md" ~/.claude/commands/update-changelog.md
 ln -sf "$(pwd)/agents/changelog-updater.md" ~/.claude/agents/changelog-updater.md
 ln -sf "$(pwd)/agents/repo-interface-analyzer.md" ~/.claude/agents/repo-interface-analyzer.md
+ln -sf "$(pwd)/statusline/statusline-custom.sh" ~/.claude/statusline-custom.sh
 ```
 
 Alternatively, you can link entire directories if you want all configurations from this repository:
