@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Configurable threshold (default: 160K tokens = 80% of 200K context)
-# NOTE: Setting this to 100K tokens = 50% of 200K context to encourage frequent compaction
-THRESHOLD=${CLAUDE_AUTO_COMPACT_THRESHOLD:-100000}
+# Start timer
+START_MS=$(python3 -c 'import time; print(int(time.time()*1e3))')
 
 # Color definitions
 ORANGE='\033[38;5;208m'
@@ -20,7 +19,17 @@ input=$(cat)
 MODEL_DISPLAY=$(echo "$input" | jq -r '.model.display_name')
 PROJECT_DIR=$(echo "$input" | jq -r '.workspace.project_dir')
 CURRENT_DIR=$(echo "$input" | jq -r '.workspace.current_dir')
-SESSION_ID=$(echo "$input" | jq -r '.session_id')
+
+# Context window usage (provided directly by Claude Code)
+USED_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0')
+CONTEXT_SIZE=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
+COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
+SESSION_ID=$(echo "$input" | jq -r '.session_id // empty')
+TOTAL_DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
+API_DURATION_MS=$(echo "$input" | jq -r '.cost.total_api_duration_ms // 0')
+LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
+LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
+TRANSCRIPT_PATH=$(echo "$input" | jq -r '.transcript_path // empty')
 
 # Get directory names and relative path
 PROJECT_NAME=$(basename "$PROJECT_DIR")
@@ -85,75 +94,51 @@ else
     GIT_STATUS=""
 fi
 
-# Calculate tokens from transcript
-TOTAL_TOKENS=0
-if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ]; then
-    TRANSCRIPT_PATH=$(find ~/.claude/projects -name "${SESSION_ID}.jsonl" 2>/dev/null | head -1)
-    if [ -f "$TRANSCRIPT_PATH" ]; then
-        # Estimate tokens (rough approximation: 1 token per 4 characters)
-        TOTAL_CHARS=$(wc -c < "$TRANSCRIPT_PATH")
-        TOTAL_TOKENS=$((TOTAL_CHARS / 4))
-    fi
-fi
-
-# Calculate percentage
-PERCENTAGE=$((TOTAL_TOKENS * 100 / THRESHOLD))
-if [ $PERCENTAGE -gt 100 ]; then
-    PERCENTAGE=100
-fi
-
-# Format token count with K notation
-if [ $TOTAL_TOKENS -ge 1000 ]; then
-    TOKEN_DISPLAY=$(echo "scale=1; $TOTAL_TOKENS / 1000" | bc)"K"
+# Context window color based on usage percentage
+PERCENTAGE=${USED_PCT%.*}  # truncate to integer
+if [ "$PERCENTAGE" -lt 50 ]; then
+    CTX_COLOR="$GREEN"
+elif [ "$PERCENTAGE" -lt 75 ]; then
+    CTX_COLOR="$ORANGE"
 else
-    TOKEN_DISPLAY="$TOTAL_TOKENS"
+    CTX_COLOR="$RED"
 fi
 
-# Determine token percentage color
-if [ $PERCENTAGE -lt 50 ]; then
-    TOKEN_COLOR="$GREEN"
-elif [ $PERCENTAGE -lt 70 ]; then
-    TOKEN_COLOR="$ORANGE"
+# Format cost
+COST_DISPLAY=$(printf '$%.2f' "$COST_USD")
+
+# Build path segment
+if [[ -n "$ABBREVIATED_PATH" ]]; then
+    PATH_SEGMENT="${BLUE}${PROJECT_NAME}${RESET}/${LIGHT_BLUE}${ABBREVIATED_PATH}${RESET}"
 else
-    TOKEN_COLOR="$RED"
+    PATH_SEGMENT="${BLUE}${PROJECT_NAME}${RESET}"
 fi
 
-# Format threshold with K notation
-THRESHOLD_K=$(echo "scale=0; $THRESHOLD / 1000" | bc)"K"
+# Build statusline: model [ctx%] cost (git) path
+MODEL_SEGMENT="${ORANGE}${MODEL_DISPLAY}${RESET} [${CTX_COLOR}${PERCENTAGE}%${RESET}]"
 
-# Build left side of statusline
 if [[ -n "$GIT_STATUS" ]]; then
-    if [[ -n "$ABBREVIATED_PATH" ]]; then
-        LEFT_SIDE="${GIT_STATUS} ${BLUE}${PROJECT_NAME}${RESET}/${LIGHT_BLUE}${ABBREVIATED_PATH}${RESET}"
-    else
-        LEFT_SIDE="${GIT_STATUS} ${BLUE}${PROJECT_NAME}${RESET}"
-    fi
+    OUTPUT="${MODEL_SEGMENT} ${WHITE}${COST_DISPLAY}${RESET} ${GIT_STATUS} ${PATH_SEGMENT}"
 else
-    if [[ -n "$ABBREVIATED_PATH" ]]; then
-        LEFT_SIDE="${BLUE}${PROJECT_NAME}${RESET}/${LIGHT_BLUE}${ABBREVIATED_PATH}${RESET}"
-    else
-        LEFT_SIDE="${BLUE}${PROJECT_NAME}${RESET}"
-    fi
+    OUTPUT="${MODEL_SEGMENT} ${WHITE}${COST_DISPLAY}${RESET} ${PATH_SEGMENT}"
 fi
 
-# Build right side of statusline
-RIGHT_SIDE="${WHITE}${TOKEN_DISPLAY}${RESET}/${WHITE}${THRESHOLD_K}${RESET}[${TOKEN_COLOR}${PERCENTAGE}%${RESET}] ${ORANGE}${MODEL_DISPLAY}${RESET}"
-
-# Calculate terminal width and positioning
-TERM_WIDTH=$(tput cols 2>/dev/null || echo 80)
-
-# Strip ANSI codes for length calculation
-LEFT_PLAIN=$(echo -e "$LEFT_SIDE" | sed 's/\x1b\[[0-9;]*m//g')
-RIGHT_PLAIN=$(echo -e "$RIGHT_SIDE" | sed 's/\x1b\[[0-9;]*m//g')
-
-LEFT_LENGTH=${#LEFT_PLAIN}
-RIGHT_LENGTH=${#RIGHT_PLAIN}
-
-# Calculate spaces needed
-SPACES_NEEDED=$((TERM_WIDTH - LEFT_LENGTH - RIGHT_LENGTH))
-if [[ $SPACES_NEEDED -lt 1 ]]; then
-    SPACES_NEEDED=1
+# Parse timing breakdown from transcript (incremental, cached)
+TIMING_DATA="0,0,0"
+if [[ -n "$TRANSCRIPT_PATH" && -f "$TRANSCRIPT_PATH" ]]; then
+    TIMING_DATA=$(python3 ~/.claude/statusline-timing.py "$TRANSCRIPT_PATH" "$TOTAL_DURATION_MS" "$API_DURATION_MS" 2>/dev/null) || TIMING_DATA="0,0,0"
 fi
+IFS=',' read -r TOTAL_FMT API_FMT IDLE_FMT TURNS <<< "$TIMING_DATA"
 
-# Output with proper spacing
-printf "%s%*s%s\n" "$(echo -e "$LEFT_SIDE")" "$SPACES_NEEDED" "" "$(echo -e "$RIGHT_SIDE")" 
+# Calculate elapsed time
+END_MS=$(python3 -c 'import time; print(int(time.time()*1e3))')
+ELAPSED_MS=$(( END_MS - START_MS ))
+
+DARK_GREY='\033[90m'
+
+# Line 1: model [ctx%] cost (git) path
+printf "%s\n" "$(echo -e "$OUTPUT")"
+
+# Line 2: all grey metadata
+LINE2="${DARK_GREY}Session: ${SESSION_ID} | Duration: ${TOTAL_FMT}/${API_FMT}/${IDLE_FMT} (total/api/idle) | Turns: ${TURNS} | Changes: +${LINES_ADDED} -${LINES_REMOVED} | Hook: ${ELAPSED_MS}ms${RESET}"
+printf "%s\n" "$(echo -e "$LINE2")"
