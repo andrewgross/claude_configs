@@ -124,11 +124,11 @@ else
 fi
 
 # Parse timing breakdown from transcript (incremental, cached)
-TIMING_DATA="0,0,0"
+TIMING_DATA="0,0,0,0,0"
 if [[ -n "$TRANSCRIPT_PATH" && -f "$TRANSCRIPT_PATH" ]]; then
-    TIMING_DATA=$(python3 ~/.claude/statusline-timing.py "$TRANSCRIPT_PATH" "$TOTAL_DURATION_MS" "$API_DURATION_MS" 2>/dev/null) || TIMING_DATA="0,0,0"
+    TIMING_DATA=$(python3 ~/.claude/statusline-timing.py "$TRANSCRIPT_PATH" "$TOTAL_DURATION_MS" "$API_DURATION_MS" 2>/dev/null) || TIMING_DATA="0,0,0,0,0"
 fi
-IFS=',' read -r TOTAL_FMT API_FMT IDLE_FMT TURNS <<< "$TIMING_DATA"
+IFS=',' read -r TOTAL_FMT API_FMT IDLE_FMT TOOL_FMT TURNS <<< "$TIMING_DATA"
 
 # Calculate elapsed time
 END_MS=$(python3 -c 'import time; print(int(time.time()*1e3))')
@@ -140,5 +140,5 @@ DARK_GREY='\033[90m'
 printf "%s\n" "$(echo -e "$OUTPUT")"
 
 # Line 2: all grey metadata
-LINE2="${DARK_GREY}Session: ${SESSION_ID} | Duration: ${TOTAL_FMT}/${API_FMT}/${IDLE_FMT} (total/api/idle) | Turns: ${TURNS} | Changes: +${LINES_ADDED} -${LINES_REMOVED} | Hook: ${ELAPSED_MS}ms${RESET}"
+LINE2="${DARK_GREY}Session: ${SESSION_ID} | Duration: ${TOTAL_FMT}/${API_FMT}/${TOOL_FMT}/${IDLE_FMT} (total/api/tool/idle) | Turns: ${TURNS} | Changes: +${LINES_ADDED} -${LINES_REMOVED} | Hook: ${ELAPSED_MS}ms${RESET}"
 printf "%s\n" "$(echo -e "$LINE2")"
