@@ -11,6 +11,7 @@ Add the marketplace and install plugins from inside Claude Code:
 ```
 /plugin marketplace add andrewgross/claude_configs
 /plugin install dev-workflow@claude-configs
+/plugin install plain-summary@claude-configs
 ```
 
 To have the marketplace and plugins configured automatically on a machine, add this to `~/.claude/settings.json` instead:
@@ -26,7 +27,8 @@ To have the marketplace and plugins configured automatically on a machine, add t
     }
   },
   "enabledPlugins": {
-    "dev-workflow@claude-configs": true
+    "dev-workflow@claude-configs": true,
+    "plain-summary@claude-configs": true
   }
 }
 ```
@@ -65,6 +67,10 @@ Agents:
 - **`changelog-updater`** - Analyze git history and generate changelog entries
 - **`repo-interface-analyzer`** - Analyze library interfaces and generate usage documentation
 
+### plain-summary
+
+A `Stop` hook that ends every turn with a short plain-language recap of what Claude just did, appended after the normal response under an `**In plain terms:**` marker. The hook blocks the first stop of each turn to request the recap, then uses the `stop_hook_active` flag to let the second stop through, so it runs exactly once per turn. See `plugins/plain-summary/README.md` for details.
+
 ## Non-plugin components
 
 ### Statusline
@@ -96,6 +102,12 @@ claude_configs/
                 plugin.json       # Plugin manifest
             commands/             # Slash commands
             agents/               # Subagent definitions
+        plain-summary/
+            .claude-plugin/
+                plugin.json       # Plugin manifest
+            hooks/
+                hooks.json        # Stop hook wiring
+                plain-summary.sh  # Hook script
     configs/
         CLAUDE.md                 # Global guidelines (symlinked by setup.sh)
     statusline/
