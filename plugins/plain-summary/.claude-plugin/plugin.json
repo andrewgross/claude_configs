@@ -1,0 +1,11 @@
+{
+  "name": "plain-summary",
+  "displayName": "Plain Summary",
+  "description": "Ends every turn with a short plain-language recap of what Claude just did",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andrew Gross"
+  },
+  "repository": "https://github.com/andrewgross/claude_configs",
+  "keywords": ["hooks", "summary", "plain-language"]
+}
