@@ -1,0 +1,11 @@
+{
+  "name": "dev-workflow",
+  "displayName": "Dev Workflow",
+  "description": "Development workflow commands and agents for commits, tests, docs, and changelogs",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andrew Gross"
+  },
+  "repository": "https://github.com/andrewgross/claude_configs",
+  "keywords": ["git", "testing", "documentation", "changelog"]
+}

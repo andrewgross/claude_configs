@@ -107,6 +107,73 @@ fi
 # Format cost
 COST_DISPLAY=$(printf '$%.2f' "$COST_USD")
 
+# Rate limits
+FIVE_HOUR_PCT=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+SEVEN_DAY_PCT=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+FIVE_HOUR_RESETS=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+SEVEN_DAY_RESETS=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+
+build_rate_segment() {
+    local pct="$1"
+    local pct_int="${pct%.*}"
+    local color
+    if [ "$pct_int" -lt 50 ]; then
+        color="$GREEN"
+    elif [ "$pct_int" -lt 80 ]; then
+        color="$ORANGE"
+    else
+        color="$RED"
+    fi
+    printf "%s%d%%%s" "$color" "$pct_int" "$RESET"
+}
+
+# Calculate human-friendly "resets in" from an ISO timestamp
+format_resets_in() {
+    local resets_at="$1"
+    local now_epoch resets_epoch diff_secs
+    now_epoch=$(date +%s)
+    resets_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${resets_at%%.*}" +%s 2>/dev/null \
+        || date -d "${resets_at}" +%s 2>/dev/null)
+    [[ -z "$resets_epoch" ]] && return
+    diff_secs=$(( resets_epoch - now_epoch ))
+    [[ "$diff_secs" -le 0 ]] && { printf "now"; return; }
+    local hours=$(( diff_secs / 3600 ))
+    local mins=$(( (diff_secs % 3600) / 60 ))
+    if [[ "$hours" -gt 0 ]]; then
+        printf "%dh%dm" "$hours" "$mins"
+    else
+        printf "%dm" "$mins"
+    fi
+}
+
+RATE_SEGMENT=""
+if [[ -n "$FIVE_HOUR_PCT" || -n "$SEVEN_DAY_PCT" ]]; then
+    RATE_PARTS=""
+    FIVE_INT="${FIVE_HOUR_PCT%.*}"
+    SEVEN_INT="${SEVEN_DAY_PCT%.*}"
+
+    if [[ -n "$FIVE_HOUR_PCT" ]]; then
+        RATE_PARTS="5h:$(build_rate_segment "$FIVE_HOUR_PCT")"
+        if [[ -n "$FIVE_INT" && "$FIVE_INT" -ge 90 && -n "$FIVE_HOUR_RESETS" ]]; then
+            RESETS_IN=$(format_resets_in "$FIVE_HOUR_RESETS")
+            [[ -n "$RESETS_IN" ]] && RATE_PARTS="${RATE_PARTS} ${RED}RESETS IN: ${RESETS_IN}${RESET}"
+        fi
+    fi
+    if [[ -n "$SEVEN_DAY_PCT" ]]; then
+        local_part="7d:$(build_rate_segment "$SEVEN_DAY_PCT")"
+        if [[ -n "$SEVEN_INT" && "$SEVEN_INT" -ge 90 && -n "$SEVEN_DAY_RESETS" ]]; then
+            RESETS_IN=$(format_resets_in "$SEVEN_DAY_RESETS")
+            [[ -n "$RESETS_IN" ]] && local_part="${local_part} ${RED}RESETS IN: ${RESETS_IN}${RESET}"
+        fi
+        if [[ -n "$RATE_PARTS" ]]; then
+            RATE_PARTS="${RATE_PARTS} ${local_part}"
+        else
+            RATE_PARTS="${local_part}"
+        fi
+    fi
+    RATE_SEGMENT=" [${RATE_PARTS}]"
+fi
+
 # Build path segment
 if [[ -n "$ABBREVIATED_PATH" ]]; then
     PATH_SEGMENT="${BLUE}${PROJECT_NAME}${RESET}/${LIGHT_BLUE}${ABBREVIATED_PATH}${RESET}"
@@ -114,8 +181,8 @@ else
     PATH_SEGMENT="${BLUE}${PROJECT_NAME}${RESET}"
 fi
 
-# Build statusline: model [ctx%] cost (git) path
-MODEL_SEGMENT="${ORANGE}${MODEL_DISPLAY}${RESET} [${CTX_COLOR}${PERCENTAGE}%${RESET}]"
+# Build statusline: model [ctx%] [rate limits] cost (git) path
+MODEL_SEGMENT="${ORANGE}${MODEL_DISPLAY}${RESET} [${CTX_COLOR}${PERCENTAGE}%${RESET}]${RATE_SEGMENT}"
 
 if [[ -n "$GIT_STATUS" ]]; then
     OUTPUT="${MODEL_SEGMENT} ${WHITE}${COST_DISPLAY}${RESET} ${GIT_STATUS} ${PATH_SEGMENT}"

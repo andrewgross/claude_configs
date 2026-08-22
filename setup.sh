@@ -1,7 +1,19 @@
 #!/bin/bash
 
 # Claude Configuration Setup Script
-# Safely links configuration files from this repository to ~/.claude/
+#
+# Commands, agents, and hooks in this repository now install as Claude Code
+# plugins instead of symlinks:
+#
+#   /plugin marketplace add andrewgross/claude_configs
+#   /plugin install dev-workflow@claude-configs
+#
+# This script handles the two pieces plugins cannot provide:
+#   - the global CLAUDE.md guidelines (linked to ~/.claude/CLAUDE.md)
+#   - the custom statusline (linked to ~/.claude/statusline-custom.sh and
+#     registered in ~/.claude/settings.json)
+#
+# It also removes symlinks left behind by the old pre-plugin layout.
 
 set -e  # Exit on any error
 
@@ -16,9 +28,40 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Setting up Claude configurations from: $SCRIPT_DIR"
 
-# Ensure ~/.claude directories exist
-echo "Creating Claude configuration directories..."
-mkdir -p ~/.claude/{agents,commands,configs}
+# Ensure ~/.claude exists
+mkdir -p ~/.claude
+
+# Function to remove a symlink if it points into this repository
+remove_stale_link() {
+    local target="$1"
+
+    if [[ -L "$target" ]]; then
+        local dest=$(readlink "$target")
+        if [[ "$dest" == "$SCRIPT_DIR"* ]]; then
+            rm "$target"
+            echo -e "${YELLOW}Removed old link: $target -> $dest${NC}"
+        fi
+    fi
+}
+
+# Clean up links from the old pre-plugin layout. Commands and agents are now
+# provided by the dev-workflow plugin, so links into the old commands/ and
+# agents/ directories are stale.
+echo ""
+echo "Cleaning up links from the old layout..."
+
+# Whole-directory links (from the old "link entire directories" setup)
+remove_stale_link ~/.claude/commands
+remove_stale_link ~/.claude/agents
+
+# Per-file links (from the old setup.sh)
+for dir in ~/.claude/commands ~/.claude/agents; do
+    if [[ -d "$dir" && ! -L "$dir" ]]; then
+        for f in "$dir"/*; do
+            remove_stale_link "$f"
+        done
+    fi
+done
 
 # Function to safely create symbolic link
 create_link() {
@@ -37,15 +80,6 @@ create_link() {
         if [[ "$current_target" == "$source" ]]; then
             echo -e "${GREEN}✓ $description already linked correctly${NC}"
             return 0
-        fi
-        # Check if parent directory is a symlink that might conflict
-        local parent_dir=$(dirname "$target")
-        if [[ -L "$parent_dir" ]]; then
-            local parent_target=$(readlink "$parent_dir")
-            if [[ "$parent_target" != "$(dirname "$source")" ]]; then
-                echo -e "${YELLOW}Warning: Parent directory $parent_dir is a symlink to different location, skipping $description${NC}"
-                return 1
-            fi
         fi
         rm "$target"
         echo -e "${YELLOW}Removed existing link: $target${NC}"
@@ -66,12 +100,6 @@ echo ""
 echo "Linking configuration files..."
 
 create_link "$SCRIPT_DIR/configs/CLAUDE.md" ~/.claude/CLAUDE.md "CLAUDE.md"
-create_link "$SCRIPT_DIR/commands/commit.md" ~/.claude/commands/commit.md "commit command"
-create_link "$SCRIPT_DIR/commands/fix-docs.md" ~/.claude/commands/fix-docs.md "fix-docs command"
-create_link "$SCRIPT_DIR/commands/fix-tests.md" ~/.claude/commands/fix-tests.md "fix-tests command"
-create_link "$SCRIPT_DIR/commands/update-changelog.md" ~/.claude/commands/update-changelog.md "update-changelog command"
-create_link "$SCRIPT_DIR/agents/changelog-updater.md" ~/.claude/agents/changelog-updater.md "changelog-updater agent"
-create_link "$SCRIPT_DIR/agents/repo-interface-analyzer.md" ~/.claude/agents/repo-interface-analyzer.md "repo-interface-analyzer agent"
 create_link "$SCRIPT_DIR/statusline/statusline-custom.sh" ~/.claude/statusline-custom.sh "statusline script"
 
 echo ""
@@ -79,7 +107,7 @@ echo "Verifying installation..."
 
 # Verify all links are working
 verification_failed=0
-for file in ~/.claude/CLAUDE.md ~/.claude/commands/*.md ~/.claude/agents/*.md ~/.claude/statusline-custom.sh; do
+for file in ~/.claude/CLAUDE.md ~/.claude/statusline-custom.sh; do
     if [[ -L "$file" && -f "$file" ]]; then
         echo -e "${GREEN}✓ $file${NC}"
     else
@@ -144,12 +172,14 @@ if [[ $verification_failed -eq 0 ]]; then
     update_settings_json
 
     echo ""
-    echo -e "${GREEN}🎉 Claude configuration setup completed successfully!${NC}"
+    echo -e "${GREEN}Setup completed successfully.${NC}"
     echo ""
-    echo "Your configurations are now linked and ready to use."
-    echo "Claude will automatically discover these configurations in your next session."
+    echo "Statusline and global CLAUDE.md are linked."
+    echo "For commands, agents, and hooks, install the plugins:"
+    echo "  /plugin marketplace add andrewgross/claude_configs"
+    echo "  /plugin install dev-workflow@claude-configs"
 else
     echo ""
-    echo -e "${RED}❌ Setup completed with some issues. Please check the failed links above.${NC}"
+    echo -e "${RED}Setup completed with some issues. Please check the failed links above.${NC}"
     exit 1
 fi

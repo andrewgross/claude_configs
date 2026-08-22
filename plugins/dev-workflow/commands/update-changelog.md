@@ -1,3 +1,7 @@
+---
+description: Update or create CHANGELOG.md from git history
+---
+
 # /update-changelog
 
 ## Description

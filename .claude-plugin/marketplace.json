@@ -1,0 +1,18 @@
+{
+  "name": "claude-configs",
+  "owner": {
+    "name": "Andrew Gross"
+  },
+  "metadata": {
+    "description": "Personal Claude Code tooling: development workflow commands, agents, and hooks"
+  },
+  "plugins": [
+    {
+      "name": "dev-workflow",
+      "source": "./plugins/dev-workflow",
+      "description": "Development workflow commands and agents for commits, tests, docs, and changelogs",
+      "version": "1.0.0",
+      "keywords": ["git", "testing", "documentation", "changelog"]
+    }
+  ]
+}

@@ -1,3 +1,7 @@
+---
+description: Stage changed files, generate a commit message, and commit
+---
+
 # /commit
 
 ## Description
