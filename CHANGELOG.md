@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Restructure the repository as a Claude Code plugin marketplace; commands and agents move into plugins/dev-workflow and install via /plugin instead of symlinks (5954a22)
 
 ### Features
+- Add plain-summary plugin: a Stop hook that ends every turn with a short plain-language recap, requested exactly once per turn via the stop_hook_active flag (16ffd9c)
 - Add .claude-plugin/marketplace.json and the dev-workflow plugin manifest (5954a22)
 - Sync statusline with the newer live copy, adding rate limit display with reset countdowns (5954a22)
 
