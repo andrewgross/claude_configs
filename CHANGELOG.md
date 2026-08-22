@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-08-15 - Current]
+## [2026-08-21 - Current]
+
+### Breaking Changes
+- Restructure the repository as a Claude Code plugin marketplace; commands and agents move into plugins/dev-workflow and install via /plugin instead of symlinks (5954a22)
+
+### Features
+- Add .claude-plugin/marketplace.json and the dev-workflow plugin manifest (5954a22)
+- Sync statusline with the newer live copy, adding rate limit display with reset countdowns (5954a22)
+
+### Enhancements
+- setup.sh now manages only the non-plugin pieces (global CLAUDE.md and statusline) and cleans up symlinks from the old layout (5954a22)
+
+### Removed
+- Drop unused Python packaging files pyproject.toml and .python-version (5954a22)
+
+## [2025-08-15]
 
 ### Features
 - Add /update-changelog command for automated changelog generation (08d8cc2)
