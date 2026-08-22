@@ -1,173 +1,120 @@
 # Claude Configurations
 
-A collection of configuration files for Claude AI agents, providing standardized commands, agents, and guidelines for software development workflows.
-
-## Overview
-
-This repository contains configuration files that enhance Claude's capabilities when working on software projects. These configurations provide Claude with:
-
-- Standardized commands for common development tasks
-- Specialized agent configurations for complex workflows
-- Consistent coding and testing guidelines
-- Language server integration for intelligent code analysis
-
-## Structure
-
-```
-claude_configs/
-    agents/           # Specialized agent configurations
-    commands/         # Command definitions for common tasks
-    configs/          # Global configuration and guidelines
-    statusline/       # Custom statusline script for Claude interface
-    pyproject.toml    # Python project configuration
-```
-
-## Components
-
-### Commands
-
-Pre-defined workflows for common development tasks:
-
-- **`/commit`** - Intelligently stage changes and generate commit messages
-- **`/fix-docs`** - Review and update repository documentation
-- **`/fix-tests`** - Run tests, identify failures, and fix them
-- **`/update-changelog`** - Automatically update CHANGELOG.md from git history
-
-### Agents
-
-Specialized configurations for complex analysis tasks:
-
-- **`changelog-updater`** - Analyze git history and generate changelog entries
-- **`repo-interface-analyzer`** - Analyze library interfaces and generate usage documentation
-
-### Configuration
-
-- **`CLAUDE.md`** - Core principles, testing guidelines, and language server tool documentation
-
-### Statusline
-
-- **`statusline-custom.sh`** - Custom statusline script that displays model info, token usage, git status, and workspace context
-
-The statusline displays:
-- Model name (e.g., "Claude 3.5 Sonnet")
-- Token usage with percentage of threshold (configurable via `CLAUDE_AUTO_COMPACT_THRESHOLD`)
-- Git repository status:
-  - `clean` - No changes
-  - `#s+#m+#u` - Staged/modified/untracked file counts
-  - `no-git` - Not in a git repository
-- Project and current directory names
-
-## Requirements
-
-- Python >=3.13
-- Git for version control operations
-- PyTest for Python testing workflows
-- Language server (MCP cclsp) for intelligent code operations
-- `jq` and `bc` for statusline script functionality
+A personal Claude Code plugin marketplace, plus the few configuration pieces that plugins cannot provide (global CLAUDE.md guidelines and a custom statusline).
 
 ## Installation
 
-To use these configurations with Claude, you need to link them into your home directory where Claude can discover them. Claude looks for configuration files in the `~/.claude/` directory structure.
+### Plugins (commands, agents, hooks)
 
-### Quick Setup (Recommended)
+Add the marketplace and install plugins from inside Claude Code:
 
-Run the automated setup script from the root of this repository:
+```
+/plugin marketplace add andrewgross/claude_configs
+/plugin install dev-workflow@claude-configs
+```
+
+To have the marketplace and plugins configured automatically on a machine, add this to `~/.claude/settings.json` instead:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-configs": {
+      "source": {
+        "source": "github",
+        "repo": "andrewgross/claude_configs"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "dev-workflow@claude-configs": true
+  }
+}
+```
+
+To pick up new plugin versions later:
+
+```
+/plugin marketplace update claude-configs
+```
+
+### Statusline and global CLAUDE.md
+
+Claude Code plugins cannot ship statusline scripts or global memory files, so those two pieces are still installed with symlinks. From the root of this repository:
 
 ```bash
 ./setup.sh
 ```
 
-The setup script will:
-- Create necessary directories in `~/.claude/`
-- Safely link all configuration files (removing existing links/files if needed)
-- Verify the installation
-- Provide colored output showing success/failure status
+The script links `configs/CLAUDE.md` to `~/.claude/CLAUDE.md`, links the statusline script to `~/.claude/statusline-custom.sh`, registers the statusline in `~/.claude/settings.json`, and removes any symlinks left over from the old pre-plugin layout. It is safe to run multiple times.
 
-This script is safe to run multiple times and can be used to update links after pulling new changes.
+## Plugins
 
-### Manual Setup
+### dev-workflow
 
-Alternatively, you can manually create the symbolic links. First, ensure the Claude configuration directory exists:
+Development workflow commands and agents.
 
-```bash
-mkdir -p ~/.claude/{agents,commands,configs}
+Commands (available as `/dev-workflow:commit` etc., or unprefixed when unambiguous):
+
+- **`/commit`** - Stage changed files, generate a commit message, and commit
+- **`/fix-docs`** - Review and update repository documentation
+- **`/fix-tests`** - Run tests, identify failures, and fix them
+- **`/update-changelog`** - Update CHANGELOG.md from git history
+
+Agents:
+
+- **`changelog-updater`** - Analyze git history and generate changelog entries
+- **`repo-interface-analyzer`** - Analyze library interfaces and generate usage documentation
+
+## Non-plugin components
+
+### Statusline
+
+`statusline/statusline-custom.sh` displays:
+
+- Model name and context window usage percentage (color coded)
+- Rate limit usage (5 hour and 7 day windows) with reset countdowns when above 90%
+- Session cost
+- Git branch and status indicators (staged/modified/untracked, ahead/behind)
+- Project and current directory names
+- A second line of session metadata (session id, durations, turns, line changes)
+
+The timing breakdown on the second line depends on an optional helper, `~/.claude/statusline-timing.py`, which is not part of this repository. Without it the duration fields display zeros.
+
+### Global guidelines
+
+`configs/CLAUDE.md` contains core principles, communication style, and Python testing guidelines applied globally to Claude sessions on this machine.
+
+## Repository structure
+
+```
+claude_configs/
+    .claude-plugin/
+        marketplace.json          # Marketplace manifest listing all plugins
+    plugins/
+        dev-workflow/
+            .claude-plugin/
+                plugin.json       # Plugin manifest
+            commands/             # Slash commands
+            agents/               # Subagent definitions
+    configs/
+        CLAUDE.md                 # Global guidelines (symlinked by setup.sh)
+    statusline/
+        statusline-custom.sh      # Statusline script (symlinked by setup.sh)
+    setup.sh                      # Installs the non-plugin pieces
 ```
 
-Then create symbolic links from this repository to your Claude configuration directory. From the root of this repository, run:
+## Requirements
 
-```bash
-# Link individual configuration files
-ln -sf "$(pwd)/configs/CLAUDE.md" ~/.claude/CLAUDE.md
-ln -sf "$(pwd)/commands/commit.md" ~/.claude/commands/commit.md
-ln -sf "$(pwd)/commands/fix-docs.md" ~/.claude/commands/fix-docs.md
-ln -sf "$(pwd)/commands/fix-tests.md" ~/.claude/commands/fix-tests.md
-ln -sf "$(pwd)/commands/update-changelog.md" ~/.claude/commands/update-changelog.md
-ln -sf "$(pwd)/agents/changelog-updater.md" ~/.claude/agents/changelog-updater.md
-ln -sf "$(pwd)/agents/repo-interface-analyzer.md" ~/.claude/agents/repo-interface-analyzer.md
-ln -sf "$(pwd)/statusline/statusline-custom.sh" ~/.claude/statusline-custom.sh
-```
-
-Alternatively, you can link entire directories if you want all configurations from this repository:
-
-```bash
-# Link entire directories (removes ability to have other configs)
-ln -sf "$(pwd)/configs" ~/.claude/
-ln -sf "$(pwd)/commands" ~/.claude/
-ln -sf "$(pwd)/agents" ~/.claude/
-```
-
-### Verifying Installation
-
-After linking, verify the configuration files are accessible:
-
-```bash
-ls -la ~/.claude/
-```
-
-You should see symbolic links pointing to the files in this repository. Claude will automatically discover and load these configurations when you interact with it in your development environment.
-
-### How Claude Uses These Files
-
-When Claude starts a session, it automatically scans the `~/.claude/` directory for configuration files. Commands become available as slash commands (like `/commit`), agents can be invoked for specialized tasks, and the guidelines in CLAUDE.md are applied globally to Claude's behavior. The configurations are loaded dynamically, so any updates to the linked files will be reflected in Claude's next session.
-
-## Usage
-
-These configurations are designed to be used with Claude AI in development environments. They provide Claude with structured approaches to common software engineering tasks.
-
-### Example Workflow
-
-1. Make code changes to your project
-2. Use `/commit` to automatically stage and commit changes with appropriate messages
-3. Use `/fix-tests` to ensure all tests pass after changes
-4. Use `/fix-docs` to update documentation to reflect code changes
-5. Use `/update-changelog` to generate changelog entries from recent commits
-
-## Testing Guidelines
-
-This repository follows strict testing principles:
-
-- Single responsibility per test
-- Fast and deterministic execution
-- Independent test execution
-- No external dependencies in unit tests
-
-See `configs/CLAUDE.md` for detailed testing guidelines.
-
-## Language Server Integration
-
-The configurations include support for MCP cclsp tools, providing intelligent code operations:
-
-- Find definitions and references
-- Rename symbols across codebases
-- Get language diagnostics
-- Perform safe refactoring
+- Claude Code with plugin support
+- Git for version control operations
+- `jq` for the statusline script and settings.json updates
 
 ## Contributing
 
-When adding new configurations:
+When adding a new plugin:
 
-1. Follow the existing structure and naming conventions
-2. Document all commands and agents thoroughly
-3. Include examples and error handling
-4. Maintain professional tone without emojis
-5. Test configurations before committing
+1. Create `plugins/<name>/` with a `.claude-plugin/plugin.json` manifest
+2. Add the plugin to `.claude-plugin/marketplace.json`
+3. Validate with `claude plugin validate .`
+4. Document the plugin in this README
+5. Maintain professional tone without emojis
