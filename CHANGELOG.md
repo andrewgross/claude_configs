@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [2026-08-22 - Current]
 
+### Bug Fixes
+- Never duplicate the recap: the plain-summary hook stands down when the response already ends with a recap footer (3b5b72d)
+
 ### Enhancements
+- Use a distinctive -.-.- recap marker instead of --- and store the recap prompt in hooks/recap-style.md (cd18d98)
+- Handle copyable content in the recap instructions: the model prints only the marker line instead of recapping content the user asked to copy (f3add25)
+- Cut the plain-summary on-screen notice to one compact reason line; additionalContext turned out to render as a feedback line, so the hook no longer sends it; bump plain-summary to 1.3.0 (3b5b72d)
 - Skip the plain-summary recap for responses shorter than 10 lines, configurable via PLAIN_SUMMARY_MIN_LINES; bump plain-summary to 1.2.0 (12f6ff1)
 - Lean the recap toward bullet points while preserving substantive detail (e65b220)
 - Shrink the visible Stop hook banner to one short line by moving the recap style instructions into additionalContext, verified to reach Claude on the same continuation (5c386e6)

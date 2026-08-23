@@ -44,14 +44,47 @@ if command -v jq >/dev/null 2>&1; then
     fi
 fi
 
-# The terminal renders the reason field of a blocking Stop hook as a loud
-# banner, so the reason is kept to one short line. The full recap style
-# instructions travel in hookSpecificOutput.additionalContext, which reaches
-# Claude for the same continuation without being printed in the banner
-# (verified empirically with a headless claude -p run). On versions that do
-# not deliver additionalContext for Stop hooks, the one-line reason alone
-# still produces a plain recap, just with less style guidance.
+# If the response already ends with a recap (a line that is exactly the
+# recap marker within its last 15 lines), stand down rather than duplicate.
+# The marker -.-.- is used instead of a markdown horizontal rule because
+# --- appears legitimately in ordinary markdown output. Needs jq; without
+# it the check is skipped.
+if command -v jq >/dev/null 2>&1; then
+    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | .[-15:] | any(. == "-.-.-")' >/dev/null 2>&1; then
+        exit 0
+    fi
+fi
+
+# Copyable content (a prompt, a snippet, a template the user asked for) is
+# handled in the recap instructions rather than detected here: the model is
+# told to print only the -.-.- line when the response is chiefly content to
+# copy, so nothing lands after the copyable block. The stop_hook_active
+# check above prevents any re-block of that marker-only continuation.
+
+# Everything the hook prints is shown to the user: the reason renders as an
+# error-styled banner and additionalContext renders as a feedback line, so
+# there is no hidden channel for instructions. The reason is therefore one
+# compact line carrying the distilled recap style, and nothing else is sent.
+#
+# The recap instructions live in recap-style.md next to this script so the
+# prompt can be edited without touching JSON; its content becomes the reason
+# and therefore the visible banner, so it must stay compact. @-style file
+# references are not resolved inside hook output (tested empirically), so
+# the file is inlined here rather than linked. If the file or jq is
+# unavailable, a built-in copy of the same instruction is used.
+if command -v jq >/dev/null 2>&1; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    STYLE_FILE="$SCRIPT_DIR/recap-style.md"
+    if [ -r "$STYLE_FILE" ]; then
+        REASON=$(tr '\n' ' ' < "$STYLE_FILE" | sed -e 's/  */ /g' -e 's/^ //' -e 's/ $//')
+        if [ -n "$REASON" ]; then
+            jq -cn --arg r "$REASON" '{decision: "block", reason: $r}'
+            exit 0
+        fi
+    fi
+fi
+
 cat <<'EOF'
-{"decision": "block", "reason": "Append a plain-language recap of the response above, after a --- rule (recap style instructions are provided in context).", "hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "Recap style: print a horizontal rule (---) on its own line, then recap mostly as short bullet points, with a plain sentence only where a bullet fits poorly. Give one bullet per meaningful point and cover every substantive detail briefly and concretely; do not collapse the response to a single headline, and do not expound either. Write for a reader who knows general technology but not this project: common technical terms are fine, but no jargon and no names or terms invented for this project; describe those in plain words. Mention specific code, files, or commands only when one is central. Say what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}}
+{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. If the response is chiefly content the user asked to copy, print only the -.-.- line and no recap. Use no tools, change nothing, and add nothing after the recap."}
 EOF
 exit 0
