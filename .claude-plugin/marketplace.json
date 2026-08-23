@@ -13,6 +13,13 @@
       "description": "Development workflow commands and agents for commits, tests, docs, and changelogs",
       "version": "1.0.0",
       "keywords": ["git", "testing", "documentation", "changelog"]
+    },
+    {
+      "name": "plain-summary",
+      "source": "./plugins/plain-summary",
+      "description": "Ends every turn with a short plain-language recap of what Claude just did",
+      "version": "1.0.0",
+      "keywords": ["hooks", "summary", "plain-language"]
     }
   ]
 }
