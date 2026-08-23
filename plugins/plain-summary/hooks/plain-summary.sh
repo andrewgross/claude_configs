@@ -85,6 +85,6 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 cat <<'EOF'
-{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. If the response is chiefly content the user asked to copy, print only the -.-.- line and no recap. Use no tools, change nothing, and add nothing after the recap."}
+{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. Use * as the bullet marker. Basic markdown is fine, such as bold for emphasis and backticks for literal names. No jargon or project-invented terms; mention code or files only if central. If the response is chiefly content the user asked to copy, print only the -.-.- line and no recap. Use no tools, change nothing, and add nothing after the recap."}
 EOF
 exit 0

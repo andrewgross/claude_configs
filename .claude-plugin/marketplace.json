@@ -18,7 +18,7 @@
       "name": "plain-summary",
       "source": "./plugins/plain-summary",
       "description": "Ends every turn with a short plain-language recap of what Claude just did",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "keywords": ["hooks", "summary", "plain-language"]
     }
   ]
