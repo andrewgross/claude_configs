@@ -69,7 +69,7 @@ Agents:
 
 ### plain-summary
 
-A `Stop` hook that ends every turn with a short plain-language recap of what Claude just did, appended after the normal response under an `**In plain terms:**` marker. The hook blocks the first stop of each turn to request the recap, then uses the `stop_hook_active` flag to let the second stop through, so it runs exactly once per turn. See `plugins/plain-summary/README.md` for details.
+A `Stop` hook that ends every turn with a short plain-language recap of what Claude just did, appended after the normal response and set apart by a horizontal rule. The hook blocks the first stop of each turn to request the recap, then uses the `stop_hook_active` flag to let the second stop through, so it runs exactly once per turn. See `plugins/plain-summary/README.md` for details.
 
 ## Non-plugin components
 

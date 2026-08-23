@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026-08-21 - Current]
+## [2026-08-22 - Current]
+
+### Enhancements
+- Tune the plain-summary recap prompt: drop the In plain terms marker in favor of the horizontal rule alone, allow bullet points and general technical terms, and keep code references minimal; bump plain-summary to 1.1.0 (0d43009)
+
+## [2026-08-21]
 
 ### Breaking Changes
 - Restructure the repository as a Claude Code plugin marketplace; commands and agents move into plugins/dev-workflow and install via /plugin instead of symlinks (5954a22)
