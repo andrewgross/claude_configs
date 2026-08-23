@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026-08-22 - Current]
+## [2026-08-23 - Current]
+
+### Enhancements
+- Use * as the recap bullet marker and allow basic markdown such as bold and backticked names in the recap; bump plain-summary to 1.4.0 (d57937c)
+
+## [2026-08-22]
 
 ### Bug Fixes
 - Never duplicate the recap: the plain-summary hook stands down when the response already ends with a recap footer (3b5b72d)
