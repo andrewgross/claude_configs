@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [2026-08-22 - Current]
 
 ### Enhancements
+- Skip the plain-summary recap for responses shorter than 10 lines, configurable via PLAIN_SUMMARY_MIN_LINES; bump plain-summary to 1.2.0 (12f6ff1)
+- Lean the recap toward bullet points while preserving substantive detail (e65b220)
+- Shrink the visible Stop hook banner to one short line by moving the recap style instructions into additionalContext, verified to reach Claude on the same continuation (5c386e6)
 - Tune the plain-summary recap prompt: drop the In plain terms marker in favor of the horizontal rule alone, allow bullet points and general technical terms, and keep code references minimal; bump plain-summary to 1.1.0 (0d43009)
 
 ## [2026-08-21]

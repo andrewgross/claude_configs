@@ -30,7 +30,28 @@ if [ "$STATE" != "first" ]; then
     exit 0
 fi
 
+# Skip the recap when the response is short: a minor answer does not need
+# rephrasing. The line count comes from the last_assistant_message field of
+# the hook input. The gate needs jq; without it (or when the field is empty
+# or missing, which counts as 0 lines) the gate is bypassed and the recap
+# runs as before. Threshold is configurable via PLAIN_SUMMARY_MIN_LINES.
+MIN_LINES="${PLAIN_SUMMARY_MIN_LINES:-10}"
+[[ "$MIN_LINES" =~ ^[0-9]+$ ]] || MIN_LINES=10
+if command -v jq >/dev/null 2>&1; then
+    LINES=$(printf '%s' "$INPUT" | jq -r '.last_assistant_message // "" | split("\n") | length' 2>/dev/null)
+    if [[ "$LINES" =~ ^[0-9]+$ ]] && [ "$LINES" -gt 0 ] && [ "$LINES" -lt "$MIN_LINES" ]; then
+        exit 0
+    fi
+fi
+
+# The terminal renders the reason field of a blocking Stop hook as a loud
+# banner, so the reason is kept to one short line. The full recap style
+# instructions travel in hookSpecificOutput.additionalContext, which reaches
+# Claude for the same continuation without being printed in the banner
+# (verified empirically with a headless claude -p run). On versions that do
+# not deliver additionalContext for Stop hooks, the one-line reason alone
+# still produces a plain recap, just with less style guidance.
 cat <<'EOF'
-{"decision": "block", "reason": "Final step before ending the turn: append a brief plain-language recap of the response above. Print a horizontal rule (---) on its own line first so the recap stands apart, then recap in whichever form is clearest: a couple of plain sentences, a few short bullet points, or both. Write for a reader who knows general technology but not this project: common technical terms are fine, but avoid jargon and avoid names or terms invented for this project; describe those in plain words instead. Mention specific code, files, or commands only when one is central to the answer. Say what was done or found, and what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}
+{"decision": "block", "reason": "Append a plain-language recap of the response above, after a --- rule (recap style instructions are provided in context).", "hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "Recap style: print a horizontal rule (---) on its own line, then recap mostly as short bullet points, with a plain sentence only where a bullet fits poorly. Give one bullet per meaningful point and cover every substantive detail briefly and concretely; do not collapse the response to a single headline, and do not expound either. Write for a reader who knows general technology but not this project: common technical terms are fine, but no jargon and no names or terms invented for this project; describe those in plain words. Mention specific code, files, or commands only when one is central. Say what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}}
 EOF
 exit 0
