@@ -6,11 +6,12 @@ Example recap:
 
 ```
 ---
-I looked at why the tests were failing and fixed the two broken ones.
-Everything passes now, and nothing else was changed.
+- Found why the tests were failing: two of them checked an outdated value.
+- Fixed both; the whole suite passes now.
+- Nothing else was changed, and no follow-up is needed.
 ```
 
-The original response is unchanged; the recap is added at the end. It can be a couple of sentences, a few short bullet points, or both. General technical terms are allowed; jargon and project-specific invented terms are not, and code or file names appear only when one is central to the answer.
+The original response is unchanged; the recap is added at the end. It leans on short bullet points, one per meaningful point, covering the substance briefly rather than collapsing it to a headline; plain sentences appear only where a bullet fits poorly. General technical terms are allowed; jargon and project-specific invented terms are not, and code or file names appear only when one is central to the answer.
 
 The horizontal rule is purely visual. Nothing parses the recap text: turn state comes entirely from the `stop_hook_active` flag described below, so the recap needs no fixed marker phrase.
 
