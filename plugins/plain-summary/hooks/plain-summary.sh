@@ -44,14 +44,21 @@ if command -v jq >/dev/null 2>&1; then
     fi
 fi
 
-# The terminal renders the reason field of a blocking Stop hook as a loud
-# banner, so the reason is kept to one short line. The full recap style
-# instructions travel in hookSpecificOutput.additionalContext, which reaches
-# Claude for the same continuation without being printed in the banner
-# (verified empirically with a headless claude -p run). On versions that do
-# not deliver additionalContext for Stop hooks, the one-line reason alone
-# still produces a plain recap, just with less style guidance.
+# If the response already ends with a recap-shaped footer (a bare --- line
+# within its last 15 lines), a recap is already there: requesting another
+# would duplicate it, so stand down. Needs jq; without it the check is
+# skipped.
+if command -v jq >/dev/null 2>&1; then
+    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | .[-15:] | any(. == "---")' >/dev/null 2>&1; then
+        exit 0
+    fi
+fi
+
+# Everything the hook prints is shown to the user: the reason renders as an
+# error-styled banner and additionalContext renders as a feedback line, so
+# there is no hidden channel for instructions. The reason is therefore one
+# compact line carrying the distilled recap style, and nothing else is sent.
 cat <<'EOF'
-{"decision": "block", "reason": "Append a plain-language recap of the response above, after a --- rule (recap style instructions are provided in context).", "hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "Recap style: print a horizontal rule (---) on its own line, then recap mostly as short bullet points, with a plain sentence only where a bullet fits poorly. Give one bullet per meaningful point and cover every substantive detail briefly and concretely; do not collapse the response to a single headline, and do not expound either. Write for a reader who knows general technology but not this project: common technical terms are fine, but no jargon and no names or terms invented for this project; describe those in plain words. Mention specific code, files, or commands only when one is central. Say what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}}
+{"decision": "block", "reason": "Append a recap of the response above: print a --- line, then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. Use no tools, change nothing, and add nothing after the recap."}
 EOF
 exit 0
