@@ -19,7 +19,7 @@ The `-.-.-` marker is used instead of a markdown horizontal rule (`---`) because
 
 A `Stop` hook fires when Claude finishes responding:
 
-1. On the first stop of a turn, the hook measures the response using the `last_assistant_message` field of the hook input. If the response is shorter than the threshold, the hook exits and the turn ends normally with no recap.
+1. On the first stop of a turn, the hook measures the response using the `last_assistant_message` field of the hook input, in estimated rendered lines rather than raw newlines, so wrapped prose counts the way it looks on screen. If the response measures shorter than the threshold, the hook exits and the turn ends normally with no recap.
 2. If the response already ends with a recap (a `-.-.-` marker line within its last 15 lines), the hook also stands down: a recap is already there, and requesting another would duplicate it. This makes it harmless when the model writes the recap into the response on its own.
 3. Otherwise the hook returns `{"decision": "block"}` with a single compact line carrying the recap instructions, and Claude continues for one more step to write the recap. Everything a blocking Stop hook outputs is rendered in the terminal — the `reason` as an error-styled banner and any `additionalContext` as a feedback line — so there is no hidden channel for long instructions. Keeping the reason to one line, and sending nothing else, is what keeps the on-screen notice small.
 4. Copyable content is handled inside the instructions rather than by detection: there is no structured signal for it in the hook input, so the model is told to print only the `-.-.-` line when the response is chiefly content the user asked to copy. The `stop_hook_active` check prevents that marker-only continuation from being blocked again.
@@ -39,9 +39,9 @@ The `stop_hook_active` check is what guarantees the recap is requested exactly o
 }
 ```
 
-The length gate measures the final text message of the turn (that is what a recap would restate) and requires `jq`. When `jq` is unavailable, or the message field is empty or missing, the gate is bypassed and every turn gets a recap, matching the previous behavior.
+The length gate measures the final text message of the turn (that is what a recap would restate) in estimated rendered lines: each source line counts as its length divided by 80 columns, rounded up, and blank lines count as 1. A three-paragraph prose answer is only 5 source lines but wraps to a dozen or more on screen, and it is measured the way it looks. The 80-column assumption is deliberately narrower than most terminals, so borderline prose errs toward getting a recap. An empty or missing message field bypasses the gate.
 
-To tune the recap prompt itself, edit `hooks/recap-style.md`: the script inlines its content as the block reason, so the file is the single place the wording lives. Its content is also exactly what the terminal notice shows, so keep it compact. `@`-style file references are not resolved inside hook output (tested empirically), which is why the file is inlined rather than linked; if the file is missing or unreadable, a built-in copy of the same instruction is used.
+To tune the recap prompt itself, edit `hooks/recap-style.md`: the script inlines its content as the block reason, so the file is the single place the wording lives. Its content is also exactly what the terminal notice shows, so keep it compact. `@`-style file references are not resolved inside hook output (tested empirically), which is why the file is inlined rather than linked.
 
 ## Install
 
@@ -49,4 +49,4 @@ To tune the recap prompt itself, edit `hooks/recap-style.md`: the script inlines
 /plugin install plain-summary@claude-configs
 ```
 
-Disable or uninstall any time via `/plugin`. The hook uses `jq` when available and falls back to pure-bash parsing when it is not. It only blocks a stop when it can positively read `stop_hook_active: false`; on anything unexpected it stays out of the way, so a parsing problem can never trap Claude in forced continuations.
+Disable or uninstall any time via `/plugin`. `jq` and the adjacent `recap-style.md` are hard requirements: if either is missing the hook prints an error to stderr and requests nothing, rather than degrading silently. It only blocks a stop when it can positively read `stop_hook_active: false`; on anything unexpected it stays out of the way, so a parsing problem can never trap Claude in forced continuations.

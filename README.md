@@ -120,7 +120,7 @@ claude_configs/
 
 - Claude Code with plugin support
 - Git for version control operations
-- `jq` for the statusline script and settings.json updates
+- `jq` for the statusline script, the plain-summary hook, and settings.json updates
 
 ## Contributing
 
