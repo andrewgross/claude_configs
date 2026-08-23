@@ -53,16 +53,13 @@ if command -v jq >/dev/null 2>&1; then
     if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | .[-15:] | any(. == "-.-.-")' >/dev/null 2>&1; then
         exit 0
     fi
-
-    # If the response ends with a fenced code block, it is likely content
-    # the user wants to copy (a prompt, a snippet, a template); a recap
-    # appended after it would sit between the block and the copy action, so
-    # stand down. There is no structured signal for copyable content in the
-    # hook input; this is a deliberate heuristic on the closing fence.
-    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | map(gsub("[[:space:]]+$"; "")) | map(select(length > 0)) | (last // "") == "```"' >/dev/null 2>&1; then
-        exit 0
-    fi
 fi
+
+# Copyable content (a prompt, a snippet, a template the user asked for) is
+# handled in the recap instructions rather than detected here: the model is
+# told to print only the -.-.- line when the response is chiefly content to
+# copy, so nothing lands after the copyable block. The stop_hook_active
+# check above prevents any re-block of that marker-only continuation.
 
 # Everything the hook prints is shown to the user: the reason renders as an
 # error-styled banner and additionalContext renders as a feedback line, so
@@ -88,6 +85,6 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 cat <<'EOF'
-{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. Use no tools, change nothing, and add nothing after the recap."}
+{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. If the response is chiefly content the user asked to copy, print only the -.-.- line and no recap. Use no tools, change nothing, and add nothing after the recap."}
 EOF
 exit 0

@@ -69,7 +69,7 @@ Agents:
 
 ### plain-summary
 
-A `Stop` hook that ends every turn with a short plain-language recap of what Claude just did, appended after the normal response and set apart by a `-.-.-` marker line. Responses shorter than 10 lines are skipped (configurable via `PLAIN_SUMMARY_MIN_LINES`), as are responses that already end with a recap (never duplicated) and responses ending in a copyable code block. The recap prompt lives in `plugins/plain-summary/hooks/recap-style.md`. The hook blocks the first stop of each turn to request the recap, then uses the `stop_hook_active` flag to let the second stop through, so it runs exactly once per turn. See `plugins/plain-summary/README.md` for details.
+A `Stop` hook that ends every turn with a short plain-language recap of what Claude just did, appended after the normal response and set apart by a `-.-.-` marker line. Responses shorter than 10 lines are skipped (configurable via `PLAIN_SUMMARY_MIN_LINES`), as are responses that already end with a recap, so recaps are never duplicated; for responses that are chiefly copyable content, the instructions tell the model to print only the marker line. The recap prompt lives in `plugins/plain-summary/hooks/recap-style.md`. The hook blocks the first stop of each turn to request the recap, then uses the `stop_hook_active` flag to let the second stop through, so it runs exactly once per turn. See `plugins/plain-summary/README.md` for details.
 
 ## Non-plugin components
 
