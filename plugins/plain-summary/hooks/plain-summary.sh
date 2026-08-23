@@ -30,6 +30,20 @@ if [ "$STATE" != "first" ]; then
     exit 0
 fi
 
+# Skip the recap when the response is short: a minor answer does not need
+# rephrasing. The line count comes from the last_assistant_message field of
+# the hook input. The gate needs jq; without it (or when the field is empty
+# or missing, which counts as 0 lines) the gate is bypassed and the recap
+# runs as before. Threshold is configurable via PLAIN_SUMMARY_MIN_LINES.
+MIN_LINES="${PLAIN_SUMMARY_MIN_LINES:-10}"
+[[ "$MIN_LINES" =~ ^[0-9]+$ ]] || MIN_LINES=10
+if command -v jq >/dev/null 2>&1; then
+    LINES=$(printf '%s' "$INPUT" | jq -r '.last_assistant_message // "" | split("\n") | length' 2>/dev/null)
+    if [[ "$LINES" =~ ^[0-9]+$ ]] && [ "$LINES" -gt 0 ] && [ "$LINES" -lt "$MIN_LINES" ]; then
+        exit 0
+    fi
+fi
+
 cat <<'EOF'
 {"decision": "block", "reason": "Final step before ending the turn: append a brief plain-language recap of the response above. Print a horizontal rule (---) on its own line first so the recap stands apart, then recap in whichever form is clearest: a couple of plain sentences, a few short bullet points, or both. Write for a reader who knows general technology but not this project: common technical terms are fine, but avoid jargon and avoid names or terms invented for this project; describe those in plain words instead. Mention specific code, files, or commands only when one is central to the answer. Say what was done or found, and what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}
 EOF
