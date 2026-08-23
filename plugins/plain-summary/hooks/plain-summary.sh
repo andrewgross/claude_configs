@@ -44,12 +44,22 @@ if command -v jq >/dev/null 2>&1; then
     fi
 fi
 
-# If the response already ends with a recap-shaped footer (a bare --- line
-# within its last 15 lines), a recap is already there: requesting another
-# would duplicate it, so stand down. Needs jq; without it the check is
-# skipped.
+# If the response already ends with a recap (a line that is exactly the
+# recap marker within its last 15 lines), stand down rather than duplicate.
+# The marker -.-.- is used instead of a markdown horizontal rule because
+# --- appears legitimately in ordinary markdown output. Needs jq; without
+# it the check is skipped.
 if command -v jq >/dev/null 2>&1; then
-    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | .[-15:] | any(. == "---")' >/dev/null 2>&1; then
+    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | .[-15:] | any(. == "-.-.-")' >/dev/null 2>&1; then
+        exit 0
+    fi
+
+    # If the response ends with a fenced code block, it is likely content
+    # the user wants to copy (a prompt, a snippet, a template); a recap
+    # appended after it would sit between the block and the copy action, so
+    # stand down. There is no structured signal for copyable content in the
+    # hook input; this is a deliberate heuristic on the closing fence.
+    if printf '%s' "$INPUT" | jq -e '.last_assistant_message // "" | split("\n") | map(gsub("[[:space:]]+$"; "")) | map(select(length > 0)) | (last // "") == "```"' >/dev/null 2>&1; then
         exit 0
     fi
 fi
@@ -58,7 +68,26 @@ fi
 # error-styled banner and additionalContext renders as a feedback line, so
 # there is no hidden channel for instructions. The reason is therefore one
 # compact line carrying the distilled recap style, and nothing else is sent.
+#
+# The recap instructions live in recap-style.md next to this script so the
+# prompt can be edited without touching JSON; its content becomes the reason
+# and therefore the visible banner, so it must stay compact. @-style file
+# references are not resolved inside hook output (tested empirically), so
+# the file is inlined here rather than linked. If the file or jq is
+# unavailable, a built-in copy of the same instruction is used.
+if command -v jq >/dev/null 2>&1; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    STYLE_FILE="$SCRIPT_DIR/recap-style.md"
+    if [ -r "$STYLE_FILE" ]; then
+        REASON=$(tr '\n' ' ' < "$STYLE_FILE" | sed -e 's/  */ /g' -e 's/^ //' -e 's/ $//')
+        if [ -n "$REASON" ]; then
+            jq -cn --arg r "$REASON" '{decision: "block", reason: $r}'
+            exit 0
+        fi
+    fi
+fi
+
 cat <<'EOF'
-{"decision": "block", "reason": "Append a recap of the response above: print a --- line, then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. Use no tools, change nothing, and add nothing after the recap."}
+{"decision": "block", "reason": "Append a recap of the response above: print a line containing exactly -.-.- then short plain-language bullets, one per substantive point, brief but concrete, noting next steps if any. No jargon or project-invented terms; mention code or files only if central. Use no tools, change nothing, and add nothing after the recap."}
 EOF
 exit 0
