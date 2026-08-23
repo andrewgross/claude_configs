@@ -20,7 +20,7 @@ The horizontal rule is purely visual. Nothing parses the recap text: turn state 
 A `Stop` hook fires when Claude finishes responding:
 
 1. On the first stop of a turn, the hook measures the response using the `last_assistant_message` field of the hook input. If the response is shorter than the threshold, the hook exits and the turn ends normally with no recap.
-2. Otherwise the hook returns `{"decision": "block"}` with instructions to append the recap, so Claude continues for one more step and writes it.
+2. Otherwise the hook returns `{"decision": "block"}`, so Claude continues for one more step and writes the recap. The terminal renders the block's `reason` field as a visible hook-feedback banner, so the reason is kept to a single short line; the full recap style instructions travel in `hookSpecificOutput.additionalContext`, which reaches Claude for the same continuation without adding to the banner. On Claude Code versions that do not deliver `additionalContext` for Stop hooks, the short reason alone still produces a plain recap, just with less style guidance.
 3. When Claude stops again, Claude Code sets `stop_hook_active` to `true` in the hook input. The hook sees that and exits cleanly, ending the turn.
 
 The `stop_hook_active` check is what guarantees the recap is requested exactly once per turn instead of looping forever. Claude Code additionally caps consecutive Stop-hook blocks as a backstop.
