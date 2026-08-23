@@ -31,6 +31,6 @@ if [ "$STATE" != "first" ]; then
 fi
 
 cat <<'EOF'
-{"decision": "block", "reason": "Final step before ending the turn: append a plain-language recap of the response above. First print a horizontal rule (---), then a line starting with **In plain terms:** followed by the recap. Keep it to 1-4 short sentences that someone with no technical background would understand: everyday words only, no jargon, no acronyms, no code or file names unless they are the whole point. Say what was done or found, and what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}
+{"decision": "block", "reason": "Final step before ending the turn: append a brief plain-language recap of the response above. Print a horizontal rule (---) on its own line first so the recap stands apart, then recap in whichever form is clearest: a couple of plain sentences, a few short bullet points, or both. Write for a reader who knows general technology but not this project: common technical terms are fine, but avoid jargon and avoid names or terms invented for this project; describe those in plain words instead. Mention specific code, files, or commands only when one is central to the answer. Say what was done or found, and what happens next if anything. Do not use any tools, do not redo or change any work, and do not add anything after the recap."}
 EOF
 exit 0
