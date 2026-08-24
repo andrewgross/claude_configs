@@ -6,12 +6,11 @@ Example recap:
 
 ```
 -.-.-
-* Found why the tests were failing: two of them checked an outdated value.
-* Fixed both; the whole suite passes now.
-* Nothing else was changed, and no follow-up is needed.
+* Two tests checked an outdated value; fixed both and the suite passes.
+* Nothing else changed.
 ```
 
-The original response is unchanged; the recap is added at the end. It leans on short bullet points (using `*` as the bullet marker), one per meaningful point, covering the substance briefly rather than collapsing it to a headline; plain sentences appear only where a bullet fits poorly. Basic markdown such as bold and backticked names is allowed. General technical terms are allowed; jargon and project-specific invented terms are not, and code or file names appear only when one is central to the answer.
+The original response is unchanged; the recap is added at the end. It is a handful of short bullets (using `*` as the bullet marker), one per meaningful point with minor ones merged — usually two to four total, each as short as it can be while staying concrete. The voice is a person jotting a quick note: basic markdown such as bold and backticked names is allowed, general technical terms are allowed, but jargon, project-specific invented terms, stock assistant phrasing ("successfully", "went ahead and", "you're all set"), celebration, and hedging are not. Code or file names appear only when one is central to the answer.
 
 The `-.-.-` marker is used instead of a markdown horizontal rule (`---`) because `---` legitimately appears in ordinary output, which would confuse the duplicate-recap check. The marker is the only thing the hook ever looks for in the recap text; turn state itself comes entirely from the `stop_hook_active` flag described below.
 
