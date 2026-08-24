@@ -102,16 +102,4 @@ def test_fetch_user_when_user_exists_returns_user_data():
 
 When providing code snippets in the chat window, present them without indentation or bullet points to facilitate easy copying. Code should start at the left margin for direct copy-paste convenience.
 
-## Team Members
-
-The Data Science team members are as follows
-
-Stu Jenkins (sjenkins@yipitdata.com)
-Sajad Meisami (smeisami@yipitdata.com)
-Payam Norouzzadeh (pnorouzzadeh@yipitdata.com)
-Bruno Belluzzo (bbelluzzo@yipitdata.com)
-Charles Nairn (charles@yipitdata.com)
-Andrew Gross (andrew@yipitdata.com)
-Mateo Juliani (mjuliani@yipitdata.com)
-
 Make sure to spell these names correctly when referencing them in tickets or code. Be aware some of your input is dictated and may have mispellings in transcription of their names.
