@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [2026-08-23 - Current]
 
 ### Enhancements
+- Tighten the recap voice: usually 2-4 bullets with minor points merged, written like a quick personal note, with stock assistant phrasing, celebration, and hedging banned by name; bump plain-summary to 1.5.0 (7864bbf)
 - Gate the recap on estimated rendered lines instead of raw newlines, so wrapped prose paragraphs count the way they look on screen (cde8576)
 - Require jq and recap-style.md outright with a visible error instead of degrading silently, removing the pure-bash fallback and the duplicated built-in prompt copy (cde8576)
 - Use * as the recap bullet marker and allow basic markdown such as bold and backticked names in the recap; bump plain-summary to 1.4.0 (d57937c)
